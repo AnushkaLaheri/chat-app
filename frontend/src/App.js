@@ -13,9 +13,11 @@ function App() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const msgEndRef = useRef();
 
+  // WebSocket connection setup
   useEffect(() => {
     if (isConnected) {
       const socket = new WebSocket(process.env.REACT_APP_WS_URL);
+
       socket.onopen = () => {
         socket.send(JSON.stringify({ type: 'join', username }));
       };
@@ -34,6 +36,34 @@ function App() {
     }
   }, [isConnected, username]);
 
+  // Scroll to latest message
+  useEffect(() => {
+    msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Format timestamp for display
+  function formatTimestamp(timestamp) {
+    const msgDate = new Date(timestamp);
+    const today = new Date();
+
+    const isSameDay =
+      msgDate.getDate() === today.getDate() &&
+      msgDate.getMonth() === today.getMonth() &&
+      msgDate.getFullYear() === today.getFullYear();
+
+    if (isSameDay) {
+      return msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      return msgDate.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+  }
+
+  // Send message via WebSocket
   const sendMessage = () => {
     if (input.trim() && ws) {
       ws.send(JSON.stringify({ type: 'message', message: input }));
@@ -42,25 +72,25 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
+  // Login screen
   if (!isConnected) {
     return (
-        <div className="login-screen">
-            <div className="login-container">
-            <h2>Join Chat Room</h2>
-            <input placeholder="Enter username" onChange={(e) => setUsername(e.target.value)} />
-            <button onClick={() => setIsConnected(true)}>Enter</button>
-            </div>
+      <div className="login-screen">
+        <div className="login-container">
+          <h2>Join Chat Room</h2>
+          <input
+            placeholder="Enter username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <button onClick={() => setIsConnected(true)}>Enter</button>
         </div>
-);
-
+      </div>
+    );
   }
 
+  // Main chat screen
   return (
-    <div className={darkMode ? "chat-container dark" : "chat-container"}>
+    <div className={darkMode ? 'chat-container dark' : 'chat-container'}>
       <button className="toggle-mode" onClick={() => setDarkMode(!darkMode)}>
         {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
       </button>
@@ -73,18 +103,22 @@ function App() {
         />
         <div className="chat-header-text">
           <h3>Chat Room</h3>
-          <p>Logged in as <strong>{username}</strong></p>
+          <p>
+            Logged in as <strong>{username}</strong>
+          </p>
         </div>
       </div>
 
       <div className="chat-messages">
         {messages.map((msg, idx) => (
-          <div className={`chat-bubble ${msg.username === username ? 'self' : 'other'}`}>
-  <div className="chat-meta">{msg.username}</div>
-  <div className="chat-text">{msg.message}</div>
-  <div className="chat-time">{new Date(msg.timestamp).toLocaleTimeString()}</div>
-</div>
-
+          <div
+            key={idx}
+            className={`chat-bubble ${msg.username === username ? 'self' : 'other'}`}
+          >
+            <div className="chat-meta">{msg.username}</div>
+            <div className="chat-text">{msg.message}</div>
+            <div className="chat-time">{formatTimestamp(msg.timestamp)}</div>
+          </div>
         ))}
         <div ref={msgEndRef} />
       </div>
@@ -103,7 +137,7 @@ function App() {
               onEmojiClick={(emojiData) => {
                 setInput((prev) => prev + emojiData.emoji);
               }}
-              theme={darkMode ? "dark" : "light"}
+              theme={darkMode ? 'dark' : 'light'}
             />
           </div>
         )}
@@ -114,7 +148,9 @@ function App() {
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type a message..."
         />
-        <button onClick={sendMessage} className="send-btn">➤</button>
+        <button onClick={sendMessage} className="send-btn">
+          ➤
+        </button>
       </div>
     </div>
   );
