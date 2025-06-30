@@ -79,7 +79,7 @@ function App() {
         <div className="login-container">
           <h2>Join Chat Room</h2>
           <input
-            placeholder="Enter username"
+            placeholder="Enter your name"
             onChange={(e) => setUsername(e.target.value)}
           />
           <button onClick={() => setIsConnected(true)}>Enter</button>
